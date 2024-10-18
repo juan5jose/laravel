@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Http\Controllers\Controller;
 use App\Models\Card;
+use App\Models\Cart;
+use App\Models\Cartproduct;
 use App\Models\Output;
 use App\Models\Productsoutput;
 
@@ -13,28 +15,32 @@ class CarritoController extends Controller
 {
     public function agregarAlCarrito(Request $request, $id)
     {
-        // Obtener el producto desde la base de datos
-        $producto = Product::findOrFail($id);
+        $product = Product::findOrFail($id);
+        $quantity = $request->input('quantity', 1);
 
-        // Obtener el carrito de la sesión o un arreglo vacío si no existe
-        $carrito = session()->get('carrito', []);
+        // Verificar si el producto ya está en el carrito
+        $cart = Cart::firstOrCreate([
+            'user_id' => auth()->id(),
+        ]);
+
+        // Verificar si el producto ya está en el carrito
+        $cartItem = Cartproduct::where('product_id', $id)
+            ->where('cart_id', $cart->id) // Usar el ID del carrito
+            ->first();
 
         // Si el producto ya está en el carrito, incrementamos la cantidad
-        if (isset($carrito[$id])) {
-            $carrito[$id]['cantidad']++;
+        if ($cartItem) {
+            // Actualizar la cantidad
+            $cartItem->amount += $quantity;
+            $cartItem->save();
         } else {
-            // Si no está, lo añadimos con cantidad 1
-            $carrito[$id] = [
-                'id' => $producto->id,
-                'nombre' => $producto->name,
-                'precio' => $producto->price,
-                'cantidad' => 1,
-                'imagen' => $producto->image,
-            ];
+            // Si no existe, crear un nuevo registro en la tabla intermedia
+            Cartproduct::create([
+                'cart_id' => $cart->id,
+                'product_id' => $product->id,
+                'amount' => $quantity,
+            ]);
         }
-
-        // Guardamos el carrito actualizado en la sesión
-        session()->put('carrito', $carrito);
 
         // Redirigimos al carrito o a la página actual
         return redirect()->route('carrito.ver')->with('success', 'Producto agregado al carrito');
@@ -43,12 +49,24 @@ class CarritoController extends Controller
     // Ver el carrito
     public function verCarrito()
     {
-        $carrito = session()->get('carrito', []);
+        // Obtener el carrito del usuario autenticado
+        $cart = Cart::where('user_id', auth()->id())->first();
 
-        // Calcular subtotal
+        // Inicializar el carrito y subtotal
+        $carrito = [];
         $subtotal = 0;
-        foreach ($carrito as $producto) {
-            $subtotal += $producto['precio'] * $producto['cantidad'];
+
+        // Verificar si el carrito existe
+        if ($cart) {
+            // Obtener los productos del carrito
+            $carrito = CartProduct::with('product') // Asegúrate de tener la relación definida
+                ->where('cart_id', $cart->id)
+                ->get();
+
+            // Calcular subtotal
+            foreach ($carrito as $item) {
+                $subtotal += $item->product->precio * $item->amount; // Asegúrate de que 'precio' esté en el modelo Product
+            }
         }
 
         return view('carrito', compact('carrito', 'subtotal'));
@@ -75,24 +93,30 @@ class CarritoController extends Controller
 
     public function actualizar(Request $request, $id)
     {
-        // Obtener el carrito de la sesión
-        $carrito = session()->get('carrito');
+        // Obtener el carrito del usuario autenticado
+        $cart = Cart::where('user_id', auth()->id())->first();
 
-        // Verificar si el producto existe en el carrito
-        if (isset($carrito[$id])) {
-            // Aumentar o disminuir la cantidad
-            if ($request->accion == 'aumentar') {
-                $carrito[$id]['cantidad']++;
-            } elseif ($request->accion == 'disminuir' && $carrito[$id]['cantidad'] > 1) {
-                $carrito[$id]['cantidad']--;
+        // Verificar si el carrito existe
+        if ($cart) {
+            // Verificar si el producto existe en el carrito
+            $cartItem = CartProduct::where('cart_id', $cart->id)
+                ->where('product_id', $id)
+                ->first();
+
+            if ($cartItem) {
+                // Aumentar o disminuir la cantidad
+                if ($request->accion == 'aumentar') {
+                    $cartItem->amount++;
+                } elseif ($request->accion == 'disminuir' && $cartItem->amount > 1) {
+                    $cartItem->amount--;
+                }
+
+                // Guardar los cambios en la base de datos
+                $cartItem->save();
             }
         }
-
-        // Guardar el carrito actualizado en la sesión
-        session()->put('carrito', $carrito);
 
         // Redireccionar de vuelta a la vista del carrito
         return redirect()->back();
     }
-
 }

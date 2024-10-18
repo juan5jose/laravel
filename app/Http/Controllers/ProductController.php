@@ -11,7 +11,7 @@ class ProductController extends Controller
     public function index()
     {
         // Obtener los productos del usuario autenticado
-        $productos = Product::where('id', auth()->id())->get();
+        $productos = Product::where('user_id', auth()->id())->get();
 
         // Retornar la vista 'misProductos' con los productos del usuario
         return view('misProductos', compact('productos'));
@@ -86,7 +86,7 @@ class ProductController extends Controller
             'descrition' => 'required|string|max:255',
             'price' => 'required|integer',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validación de imagen
-            'stock' => $request->input('stock'),
+            'stock' => 'require|integer',
 
         ]);
 
@@ -100,7 +100,7 @@ class ProductController extends Controller
         $producto->name = $request->input('name');
         $producto->descrition = $request->input('descrition');
         $producto->price = (int) $price;
-        $producto->exits = $request->input('exits');
+        $producto->stock = $request->input('exits');
 
         // Manejar la imagen
         if ($request->hasFile('image')) {
@@ -131,7 +131,7 @@ class ProductController extends Controller
     public function show($id)
     {
         // Busca el producto por su ID y carga las relaciones
-        $producto = Product::with(['productsoutput', 'productsoinput', 'productslow'])->findOrFail($id);
+        $producto = Product::findOrFail($id);
 
         // Retorna la vista con los datos del producto
         return view('infoProduc', compact('producto'));

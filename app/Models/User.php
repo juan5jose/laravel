@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -46,5 +47,15 @@ class User extends Authenticatable
     public function rol()
     {
         return $this->belongsTo(Rol::class);
+    }
+
+    public function product(): HasMany
+    {
+        return $this->hasMany(Product::class); // Relación con el modelo 'Card'
+    }
+
+    public function cart(): HasMany
+    {
+        return $this->hasMany(Cart::class); // Relación con el modelo 'Card'
     }
 }

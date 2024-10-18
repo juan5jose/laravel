@@ -12,19 +12,19 @@
                 <b>Carrito de compras</b> <br> <br>
                 <p>Tienes {{ count($carrito) }} productos en tu carrito</p>
             </div>
-
-            @foreach ($carrito as $id => $producto)
+            
+            @foreach ($carrito as $producto)
                 <div class="producto">
-                    <img src="{{ asset('images/' . $producto['imagen']) }}" alt="{{ $producto['nombre'] }}" />
+                    <img src="{{ asset('images/' . $producto->product->image) }}" alt="{{ $producto->product->name }}" />
                     <!-- Cambia 'image' a 'imagen' -->
                     <div class="infoProduc">
-                        <b>{{ $producto['nombre'] }}</b> <!-- Cambia 'name' a 'nombre' -->
+                        <b>{{ $producto->product->name }}</b> <!-- Cambia 'name' a 'nombre' -->
                         {{-- <p>{{ $producto['nombre'] }}</p> --}}
                     </div>
                     <!-- Control de cantidad con flechas -->
                     <div class="cantidad-control">
                         <!-- Botón para aumentar cantidad -->
-                        <form method="POST" action="{{ route('carrito.actualizar', $id) }}">
+                        <form method="POST" action="{{ route('carrito.actualizar', $producto->product->id) }}">
                             @csrf
                             @method('PATCH')
                             <input type="hidden" name="accion" value="aumentar">
@@ -34,10 +34,10 @@
                         </form>
 
 
-                        <p class="cantidad">{{ $producto['cantidad'] }}</p>
+                        <p class="cantidad">{{ $producto->amount }}</p>
 
                         <!-- Botón para disminuir cantidad -->
-                        <form method="POST" action="{{ route('carrito.actualizar', $id) }}">
+                        <form method="POST" action="{{ route('carrito.actualizar', $producto->product->id) }}">
                             @csrf
                             @method('PATCH')
                             <input type="hidden" name="accion" value="disminuir">
@@ -48,9 +48,9 @@
 
                     </div>
                     <div class="precio">
-                        <b>${{ number_format($producto['precio'] * $producto['cantidad'], 0, ',', '.') }}</b>
+                        <b>${{ number_format($producto->product->price * $producto->amount, 0, ',', '.') }}</b>
                         <!-- Cambia 'price' a 'precio' -->
-                        <form method="POST" action="{{ route('carrito.eliminar', $id) }}">
+                        <form method="POST" action="{{ route('carrito.eliminar', $producto->id) }}">
                             @csrf
                             <button type="submit">
                                 <i class="fa-regular fa-trash-can"></i>

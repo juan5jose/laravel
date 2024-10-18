@@ -10,32 +10,7 @@
                 ${{ number_format($producto->price, 0, ',', '.') }}
             </b>
 
-            <?php 
-            $total = 0;
-
-            // Verificar si hay productos de entrada y sumar sus cantidades
-            if ($producto->productsoinput && $producto->productsoinput->isNotEmpty()) {
-                foreach ($producto->productsoinput as $input) {
-                    $total += $input->amount; // Acceso correcto a la propiedad amount
-                }
-            }
-
-            // Verificar si hay productos de salida y restar sus cantidades
-            if ($producto->productsoutput) {
-                foreach ($producto->productsoutput as $output) {
-                    $total -= $output->amount;
-                }
-            }
-
-            // Verificar si hay productos en espera y restar sus cantidades
-            if ($producto->productslow) {
-                foreach ($producto->productslow as $slow) {
-                    $total -= $slow->amount;
-                }
-            }
-            ?>
-
-            <p>Existencias: {{ $total }}</p>
+            <p>Existencias: {{ $producto->stock }}</p>
             <p>
                 <h3>Descripción</h3><br />
                 {{ $producto->descrition }}

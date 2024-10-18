@@ -18,10 +18,10 @@ use Illuminate\Support\Facades\Route;
 
 Auth::routes();
 
-Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::view('/', 'index')->name('home');
 
 Route::get('/misProductos', [ProductController::class, 'index'])->name('misProductos'); // Muestra solo los productos del usuario logueado
-Route::get('/misProductos/store', 'formProduct')->name('misProductos.store'); // Muestra solo los productos del usuario logueado
+Route::view('/misProductos/store', 'formProduc')->name('misProductos.store'); // Muestra solo los productos del usuario logueado
 
 // Ruta para gestionar los productos (CRUD completo)
 Route::resource('products', ProductController::class)->except(['index', 'destroy']); // Elimina 'index' para evitar conflicto con la ruta '/misProductos'
